@@ -2,13 +2,13 @@
 
 class Board
 {
-    private char[,] board;
+    private char[,] gameBoard; // Renamed from 'board'
     private const int Rows = 6;
     private const int Cols = 7;
 
     public Board()
     {
-        board = new char[Rows, Cols];
+        gameBoard = new char[Rows, Cols];
         InitializeBoard();
     }
 
@@ -18,7 +18,7 @@ class Board
         {
             for (int j = 0; j < Cols; j++)
             {
-                board[i, j] = ' ';
+                gameBoard[i, j] = ' ';
             }
         }
     }
@@ -29,7 +29,7 @@ class Board
         {
             for (int j = 0; j < Cols; j++)
             {
-                Console.Write("|" + board[i, j]);
+                Console.Write("|" + gameBoard[i, j]);
             }
             Console.WriteLine("|");
         }
@@ -38,16 +38,16 @@ class Board
 
     public bool IsColumnFull(int col)
     {
-        return board[0, col] != ' ';
+        return gameBoard[0, col] != ' ';
     }
 
     public bool DropPiece(int col, char piece)
     {
         for (int i = Rows - 1; i >= 0; i--)
         {
-            if (board[i, col] == ' ')
+            if (gameBoard[i, col] == ' ')
             {
-                board[i, col] = piece;
+                gameBoard[i, col] = piece;
                 return true;
             }
         }
@@ -61,7 +61,7 @@ class Board
         {
             for (int j = 0; j < Cols - 3; j++)
             {
-                if (board[i, j] == piece && board[i, j + 1] == piece && board[i, j + 2] == piece && board[i, j + 3] == piece)
+                if (gameBoard[i, j] == piece && gameBoard[i, j + 1] == piece && gameBoard[i, j + 2] == piece && gameBoard[i, j + 3] == piece)
                     return true;
             }
         }
@@ -71,7 +71,7 @@ class Board
         {
             for (int j = 0; j < Cols; j++)
             {
-                if (board[i, j] == piece && board[i + 1, j] == piece && board[i + 2, j] == piece && board[i + 3, j] == piece)
+                if (gameBoard[i, j] == piece && gameBoard[i + 1, j] == piece && gameBoard[i + 2, j] == piece && gameBoard[i + 3, j] == piece)
                     return true;
             }
         }
@@ -81,7 +81,7 @@ class Board
         {
             for (int j = 0; j < Cols - 3; j++)
             {
-                if (board[i, j] == piece && board[i + 1, j + 1] == piece && board[i + 2, j + 2] == piece && board[i + 3, j + 3] == piece)
+                if (gameBoard[i, j] == piece && gameBoard[i + 1, j + 1] == piece && gameBoard[i + 2, j + 2] == piece && gameBoard[i + 3, j + 3] == piece)
                     return true;
             }
         }
@@ -91,7 +91,7 @@ class Board
         {
             for (int j = 0; j < Cols - 3; j++)
             {
-                if (board[i, j] == piece && board[i - 1, j + 1] == piece && board[i - 2, j + 2] == piece && board[i - 3, j + 3] == piece)
+                if (gameBoard[i, j] == piece && gameBoard[i - 1, j + 1] == piece && gameBoard[i - 2, j + 2] == piece && gameBoard[i - 3, j + 3] == piece)
                     return true;
             }
         }
@@ -133,13 +133,13 @@ class HumanPlayer : Player
 
 class Connect4Game
 {
-    private Board board;
+    private Board gameBoard;
     private Player[] players;
     private int currentPlayer;
 
     public Connect4Game()
     {
-        board = new Board();
+        gameBoard = new Board();
         players = new Player[] { new HumanPlayer { Name = "Player 1", Piece = 'X' }, new HumanPlayer { Name = "Player 2", Piece = 'O' } };
         currentPlayer = 0;
     }
@@ -148,19 +148,19 @@ class Connect4Game
     {
         while (true)
         {
-            board.Display();
-            int col = players[currentPlayer].MakeMove(board);
-            board.DropPiece(col, players[currentPlayer].Piece);
+            gameBoard.Display();
+            int col = players[currentPlayer].MakeMove(gameBoard);
+            gameBoard.DropPiece(col, players[currentPlayer].Piece);
 
-            if (board.CheckWinner(players[currentPlayer].Piece))
+            if (gameBoard.CheckWinner(players[currentPlayer].Piece))
             {
-                board.Display();
+                gameBoard.Display();
                 Console.WriteLine($"{players[currentPlayer].Name} wins!");
                 break;
             }
             if (AllColumnsFull())
             {
-                board.Display();
+                gameBoard.Display();
                 Console.WriteLine("It's a draw!");
                 break;
             }
@@ -173,7 +173,7 @@ class Connect4Game
     {
         for (int col = 0; col < 7; col++)
         {
-            if (!board.IsColumnFull(col))
+            if (!gameBoard.IsColumnFull(col))
                 return false;
         }
         return true;
