@@ -1,190 +1,231 @@
-﻿using System;
+using System;
 
-class Board
+struct PlayerInfo
 {
-    private char[,] gameBoard; // Renamed from 'board'
-    private const int Rows = 6;
-    private const int Cols = 7;
-
-    public Board()
-    {
-        gameBoard = new char[Rows, Cols];
-        InitializeBoard();
-    }
-
-    private void InitializeBoard()
-    {
-        for (int i = 0; i < Rows; i++)
-        {
-            for (int j = 0; j < Cols; j++)
-            {
-                gameBoard[i, j] = ' ';
-            }
-        }
-    }
-
-    public void Display()
-    {
-        for (int i = 0; i < Rows; i++)
-        {
-            for (int j = 0; j < Cols; j++)
-            {
-                Console.Write("|" + gameBoard[i, j]);
-            }
-            Console.WriteLine("|");
-        }
-        Console.WriteLine("-----------------");
-    }
-
-    public bool IsColumnFull(int col)
-    {
-        return gameBoard[0, col] != ' ';
-    }
-
-    public bool DropPiece(int col, char piece)
-    {
-        for (int i = Rows - 1; i >= 0; i--)
-        {
-            if (gameBoard[i, col] == ' ')
-            {
-                gameBoard[i, col] = piece;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public bool CheckWinner(char piece)
-    {
-        // Check rows
-        for (int i = 0; i < Rows; i++)
-        {
-            for (int j = 0; j < Cols - 3; j++)
-            {
-                if (gameBoard[i, j] == piece && gameBoard[i, j + 1] == piece && gameBoard[i, j + 2] == piece && gameBoard[i, j + 3] == piece)
-                    return true;
-            }
-        }
-
-        // Check columns
-        for (int i = 0; i < Rows - 3; i++)
-        {
-            for (int j = 0; j < Cols; j++)
-            {
-                if (gameBoard[i, j] == piece && gameBoard[i + 1, j] == piece && gameBoard[i + 2, j] == piece && gameBoard[i + 3, j] == piece)
-                    return true;
-            }
-        }
-
-        // Check diagonals \
-        for (int i = 0; i < Rows - 3; i++)
-        {
-            for (int j = 0; j < Cols - 3; j++)
-            {
-                if (gameBoard[i, j] == piece && gameBoard[i + 1, j + 1] == piece && gameBoard[i + 2, j + 2] == piece && gameBoard[i + 3, j + 3] == piece)
-                    return true;
-            }
-        }
-
-        // Check diagonals /
-        for (int i = 3; i < Rows; i++)
-        {
-            for (int j = 0; j < Cols - 3; j++)
-            {
-                if (gameBoard[i, j] == piece && gameBoard[i - 1, j + 1] == piece && gameBoard[i - 2, j + 2] == piece && gameBoard[i - 3, j + 3] == piece)
-                    return true;
-            }
-        }
-
-        return false;
-    }
-}
-
-abstract class Player
-{
-    public string Name { get; set; }
-    public char Piece { get; set; }
-
-    public abstract int MakeMove(Board board);
-}
-
-class HumanPlayer : Player
-{
-    public override int MakeMove(Board board)
-    {
-        while (true)
-        {
-            try
-            {
-                Console.Write($"{Name}, enter column number (0-6): ");
-                int col = int.Parse(Console.ReadLine());
-                if (col >= 0 && col < 7 && !board.IsColumnFull(col))
-                    return col;
-                else
-                    Console.WriteLine("Invalid column or column is full. Try again.");
-            }
-            catch (FormatException)
-            {
-                Console.WriteLine("Invalid input. Please enter a number.");
-            }
-        }
-    }
-}
-
-class Connect4Game
-{
-    private Board gameBoard;
-    private Player[] players;
-    private int currentPlayer;
-
-    public Connect4Game()
-    {
-        gameBoard = new Board();
-        players = new Player[] { new HumanPlayer { Name = "Player 1", Piece = 'X' }, new HumanPlayer { Name = "Player 2", Piece = 'O' } };
-        currentPlayer = 0;
-    }
-
-    public void Play()
-    {
-        while (true)
-        {
-            gameBoard.Display();
-            int col = players[currentPlayer].MakeMove(gameBoard);
-            gameBoard.DropPiece(col, players[currentPlayer].Piece);
-
-            if (gameBoard.CheckWinner(players[currentPlayer].Piece))
-            {
-                gameBoard.Display();
-                Console.WriteLine($"{players[currentPlayer].Name} wins!");
-                break;
-            }
-            if (AllColumnsFull())
-            {
-                gameBoard.Display();
-                Console.WriteLine("It's a draw!");
-                break;
-            }
-
-            currentPlayer = (currentPlayer + 1) % 2;
-        }
-    }
-
-    private bool AllColumnsFull()
-    {
-        for (int col = 0; col < 7; col++)
-        {
-            if (!gameBoard.IsColumnFull(col))
-                return false;
-        }
-        return true;
-    }
+    public string PlayerName;
+    public char PlayerID;
 }
 
 class Program
 {
     static void Main(string[] args)
     {
-        Connect4Game game = new Connect4Game();
-        game.Play();
+        PlayerInfo playerOne, playerTwo;
+        char[,] board = new char[9, 10];
+        int dropChoice, win, full, again;
+
+        Console.WriteLine("Let's Play Connect 4\n");
+
+        Console.Write("Player One please enter your name: ");
+        playerOne.PlayerName = Console.ReadLine();
+        playerOne.PlayerID = 'X';
+
+        Console.Write("Player Two please enter your name: ");
+        playerTwo.PlayerName = Console.ReadLine();
+        playerTwo.PlayerID = 'O';
+
+        full = 0;
+        win = 0;
+        again = 0;
+
+        DisplayBoard(board);
+        do
+        {
+            dropChoice = PlayerDrop(board, playerOne);
+            CheckBellow(board, playerOne, dropChoice);
+            DisplayBoard(board);
+            win = CheckFour(board, playerOne);
+            if (win == 1)
+            {
+                PlayerWin(playerOne);
+                again = Restart(board);
+                if (again == 2)
+                {
+                    break;
+                }
+            }
+
+            dropChoice = PlayerDrop(board, playerTwo);
+            CheckBellow(board, playerTwo, dropChoice);
+            DisplayBoard(board);
+            win = CheckFour(board, playerTwo);
+            if (win == 1)
+            {
+                PlayerWin(playerTwo);
+                again = Restart(board);
+                if (again == 2)
+                {
+                    break;
+                }
+            }
+            full = FullBoard(board);
+            if (full == 7)
+            {
+                Console.WriteLine("The board is full, it is a draw!");
+                again = Restart(board);
+            }
+
+        } while (again != 2);
+    }
+
+    static int PlayerDrop(char[,] board, PlayerInfo activePlayer)
+    {
+        int dropChoice;
+        do
+        {
+            Console.Write($"{activePlayer.PlayerName}'s Turn ");
+            Console.Write("Please enter a number between 1 and 7: ");
+            string input = Console.ReadLine();
+
+            if (int.TryParse(input, out dropChoice))
+            {
+                if (dropChoice >= 1 && dropChoice <= 7 && board[1, dropChoice] != 'X' && board[1, dropChoice] != 'O')
+                {
+                    break;
+                }
+            }
+
+            Console.WriteLine("Invalid input. Please enter a number between 1 and 7.");
+        } while (true);
+
+        return dropChoice;
+    }
+
+    static void CheckBellow(char[,] board, PlayerInfo activePlayer, int dropChoice)
+    {
+        int length = 6;
+        int turn = 0;
+
+        do
+        {
+            if (board[length, dropChoice] != 'X' && board[length, dropChoice] != 'O')
+            {
+                board[length, dropChoice] = activePlayer.PlayerID;
+                turn = 1;
+            }
+            else
+            {
+                length--;
+            }
+
+        } while (turn != 1);
+    }
+
+    static void DisplayBoard(char[,] board)
+    {
+        int rows = 6, columns = 7;
+
+        for (int i = 1; i <= rows; i++)
+        {
+            Console.Write("|");
+            for (int ix = 1; ix <= columns; ix++)
+            {
+                if (board[i, ix] != 'X' && board[i, ix] != 'O')
+                {
+                    board[i, ix] = '*';
+                }
+
+                Console.Write(board[i, ix]);
+            }
+
+            Console.WriteLine("|");
+        }
+    }
+
+    static int CheckFour(char[,] board, PlayerInfo activePlayer)
+    {
+        char XO = activePlayer.PlayerID;
+        int win = 0;
+
+        for (int i = 8; i >= 1; i--)
+        {
+            for (int ix = 9; ix >= 1; ix--)
+            {
+                if (board[i, ix] == XO &&
+                    board[i - 1, ix - 1] == XO &&
+                    board[i - 2, ix - 2] == XO &&
+                    board[i - 3, ix - 3] == XO)
+                {
+                    win = 1;
+                }
+
+                if (board[i, ix] == XO &&
+                    board[i, ix - 1] == XO &&
+                    board[i, ix - 2] == XO &&
+                    board[i, ix - 3] == XO)
+                {
+                    win = 1;
+                }
+
+                if (board[i, ix] == XO &&
+                    board[i - 1, ix] == XO &&
+                    board[i - 2, ix] == XO &&
+                    board[i - 3, ix] == XO)
+                {
+                    win = 1;
+                }
+
+                if (board[i, ix] == XO &&
+                    board[i - 1, ix + 1] == XO &&
+                    board[i - 2, ix + 2] == XO &&
+                    board[i - 3, ix + 3] == XO)
+                {
+                    win = 1;
+                }
+
+                if (board[i, ix] == XO &&
+                    board[i, ix + 1] == XO &&
+                    board[i, ix + 2] == XO &&
+                    board[i, ix + 3] == XO)
+                {
+                    win = 1;
+                }
+            }
+        }
+
+        return win;
+    }
+
+    static int FullBoard(char[,] board)
+    {
+        int full = 0;
+        for (int i = 1; i <= 7; i++)
+        {
+            if (board[1, i] != '*')
+            {
+                full++;
+            }
+        }
+
+        return full;
+    }
+
+    static void PlayerWin(PlayerInfo activePlayer)
+    {
+        Console.WriteLine($"\n{activePlayer.PlayerName} Connected Four, You Win!");
+    }
+
+    static int Restart(char[,] board)
+    {
+        int restart;
+
+        Console.Write("Would you like to restart? Yes(1) No(2): ");
+        restart = int.Parse(Console.ReadLine());
+        if (restart == 1)
+        {
+            for (int i = 1; i <= 6; i++)
+            {
+                for (int ix = 1; ix <= 7; ix++)
+                {
+                    board[i, ix] = '*';
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine("Goodbye!");
+        }
+
+        return restart;
     }
 }
