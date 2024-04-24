@@ -6,9 +6,9 @@ struct PlayerInfo
     public char PlayerID;
 }
 
-class Program
+public class Program
 {
-    static void Main(string[] args)
+    public static void Main(string[] args)
     {
         PlayerInfo playerOne, playerTwo;
         char[,] board = new char[9, 10];
@@ -73,7 +73,7 @@ class Program
         int dropChoice;
         do
         {
-            Console.Write($"{activePlayer.PlayerName}'s Turn ");
+            Console.Write(activePlayer.PlayerName + "'s Turn ");
             Console.Write("Please enter a number between 1 and 7: ");
             string input = Console.ReadLine();
 
@@ -202,7 +202,7 @@ class Program
 
     static void PlayerWin(PlayerInfo activePlayer)
     {
-        Console.WriteLine($"\n{activePlayer.PlayerName} Connected Four, You Win!");
+        Console.WriteLine("\n" + activePlayer.PlayerName + " Connected Four, You Win!");
     }
 
     static int Restart(char[,] board)
