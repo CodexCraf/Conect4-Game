@@ -1,0 +1,58 @@
+code skeleton
+
+using System;
+using System.Collections.Generic;
+
+public class Player
+{
+    // Properties
+    // Constructor
+    // MakeMove method
+}
+
+public class HumanPlayer : Player
+{
+    // Constructor
+    // Override MakeMove method
+}
+
+public class AIPlayer : Player
+{
+    // Constructor
+    // Override MakeMove method
+}
+
+public class Board
+{
+    // Properties
+    // Constructor
+    // InitializeBoard method
+    // IsValidMove method
+    // IsFull method
+    // GetAvailableColumns method
+    // PlaceSymbol method
+    // IsCellOccupied method
+    // GetSymbol method
+    // Print method
+}
+
+public class ConnectFour
+{
+    static void Main(string[] args)
+    {
+        // Initialize game objects
+        
+        // Play the game
+    }
+
+    static void PlayGame(Board board, Player player1, Player player2)
+    {
+        // Implement game loop
+    }
+
+    static bool CheckWin(Board board, char symbol)
+    {
+        // Implement win-checking logic
+        return false;
+    }
+}
