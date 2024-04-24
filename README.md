@@ -14,3 +14,6 @@ Members(individual): Daniel Eno
 ## Features
 - Simple console-based user interface
 - Two-player mode
+
+## PLay
+https://dotnetfiddle.net/umcztd
