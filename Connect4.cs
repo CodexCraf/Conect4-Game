@@ -9,7 +9,7 @@ struct PlayerInfo
 
 public class Program
 {
-    private static Stack<int> moveHistory = new Stack<int>(); // Stack to store move history
+    private static Stack<int> moveHistory = new Stack<int>(); 
     private static Random random = new Random();
 
     public static void Main(string[] args)
@@ -47,72 +47,77 @@ public class Program
         char[,] board = new char[9, 10];
         int dropChoice, win, full, again;
 
-        full = 0;
-        win = 0;
-        again = 0;
-
-        DisplayBoard(board);
         do
         {
-            dropChoice = PlayerDrop(board, playerOne);
-            CheckBellow(board, playerOne, dropChoice);
-            moveHistory.Push(dropChoice); // Store move in history
+            ResetBoard(board);
+            ResetMoveHistory();
+            full = 0;
+            win = 0;
+            again = 0;
+
             DisplayBoard(board);
-            win = CheckFour(board, playerOne);
-            if (win == 1)
+            do
             {
-                PlayerWin(playerOne);
-                again = Restart(board);
-                if (again == 2)
-                {
-                    break;
-                }
-            }
-
-            if (gameMode == 1 && again != 2) // AI's turn only in single-player mode
-            {
-                dropChoice = AIPlayer(board);
-                CheckBellow(board, playerTwo, dropChoice);
-                moveHistory.Push(dropChoice); // Store move in history
-                Console.WriteLine("AI's Move:");
+                dropChoice = PlayerDrop(board, playerOne);
+                CheckBellow(board, playerOne, dropChoice);
+                moveHistory.Push(dropChoice); 
                 DisplayBoard(board);
-                win = CheckFour(board, playerTwo);
+                win = CheckFour(board, playerOne);
                 if (win == 1)
                 {
-                    PlayerWin(playerTwo);
+                    PlayerWin(playerOne);
                     again = Restart(board);
                     if (again == 2)
                     {
                         break;
                     }
                 }
-            }
-            else if (gameMode == 2 && again != 2) // Player Two's turn in two-player mode
-            {
-                dropChoice = PlayerDrop(board, playerTwo);
-                CheckBellow(board, playerTwo, dropChoice);
-                moveHistory.Push(dropChoice); // Store move in history
-                DisplayBoard(board);
-                win = CheckFour(board, playerTwo);
-                if (win == 1)
+
+                if (gameMode == 1 && again != 2) 
                 {
-                    PlayerWin(playerTwo);
-                    again = Restart(board);
-                    if (again == 2)
+                    dropChoice = AIPlayer(board);
+                    CheckBellow(board, playerTwo, dropChoice);
+                    moveHistory.Push(dropChoice);
+                    Console.WriteLine("AI's Move:");
+                    DisplayBoard(board);
+                    win = CheckFour(board, playerTwo);
+                    if (win == 1)
                     {
-                        break;
+                        PlayerWin(playerTwo);
+                        again = Restart(board);
+                        if (again == 2)
+                        {
+                            break;
+                        }
                     }
                 }
-            }
+                else if (gameMode == 2 && again != 2) 
+                {
+                    dropChoice = PlayerDrop(board, playerTwo);
+                    CheckBellow(board, playerTwo, dropChoice);
+                    moveHistory.Push(dropChoice); 
+                    DisplayBoard(board);
+                    win = CheckFour(board, playerTwo);
+                    if (win == 1)
+                    {
+                        PlayerWin(playerTwo);
+                        again = Restart(board);
+                        if (again == 2)
+                        {
+                            break;
+                        }
+                    }
+                }
 
-            full = FullBoard(board);
-            if (full == 7)
-            {
-                Console.WriteLine("The board is full, it is a draw!");
-                again = Restart(board);
-            }
+                full = FullBoard(board);
+                if (full == 7)
+                {
+                    Console.WriteLine("The board is full, it is a draw!");
+                    again = Restart(board);
+                }
 
-        } while (again != 2);
+            } while (again != 2);
+        } while (again == 1);
     }
 
     static int PlayerDrop(char[,] board, PlayerInfo activePlayer)
@@ -128,7 +133,7 @@ public class Program
                 Console.Write(": ");
             string input = Console.ReadLine();
 
-            if (input.ToLower() == "undo" && activePlayer.PlayerName != "AI") // Check for undo command
+            if (input.ToLower() == "undo" && activePlayer.PlayerName != "AI") 
             {
                 UndoLastMove(board);
                 continue;
@@ -148,11 +153,28 @@ public class Program
         return dropChoice;
     }
 
+    static void ResetBoard(char[,] board)
+    {
+        for (int i = 1; i <= 6; i++)
+        {
+            for (int j = 1; j <= 7; j++)
+            {
+                board[i, j] = '*';
+            }
+        }
+    }
+
+    static void ResetMoveHistory()
+    {
+        moveHistory.Clear();
+    }
+
     static void UndoLastMove(char[,] board)
     {
-        if (moveHistory.Count > 0)
+        if (moveHistory.Count >= 2) 
         {
             int lastMove = moveHistory.Pop();
+            int secondLastMove = moveHistory.Pop();
             for (int i = 1; i <= 6; i++)
             {
                 if (board[i, lastMove] != '*')
@@ -161,12 +183,20 @@ public class Program
                     break;
                 }
             }
-            Console.WriteLine("Last move undone.");
+            for (int i = 1; i <= 6; i++)
+            {
+                if (board[i, secondLastMove] != '*')
+                {
+                    board[i, secondLastMove] = '*';
+                    break;
+                }
+            }
+            Console.WriteLine("Last two moves undone. (AI might change it move)");
             DisplayBoard(board);
         }
         else
         {
-            Console.WriteLine("No moves to undo.");
+            Console.WriteLine("Not enough moves to undo.");
         }
     }
 
@@ -292,13 +322,8 @@ public class Program
         restart = int.Parse(Console.ReadLine());
         if (restart == 1)
         {
-            for (int i = 1; i <= 6; i++)
-            {
-                for (int ix = 1; ix <= 7; ix++)
-                {
-                    board[i, ix] = '*';
-                }
-            }
+            ResetBoard(board);
+            ResetMoveHistory();
         }
         else
         {
@@ -313,7 +338,7 @@ public class Program
         int move;
         do
         {
-            move = random.Next(1, 8); // Generate a random move
+            move = random.Next(1, 8); 
         } while (board[1, move] != '*');
 
         return move;
