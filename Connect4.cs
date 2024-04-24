@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 struct PlayerInfo
 {
@@ -8,21 +9,43 @@ struct PlayerInfo
 
 public class Program
 {
+    private static Stack<int> moveHistory = new Stack<int>(); // Stack to store move history
+    private static Random random = new Random();
+
     public static void Main(string[] args)
     {
+        Console.WriteLine("Welcome to Connect 4!");
+        Console.WriteLine("Select Game Mode:");
+        Console.WriteLine("1. Single Player");
+        Console.WriteLine("2. Two Players");
+
+        int gameMode = int.Parse(Console.ReadLine());
+        if (gameMode != 1 && gameMode != 2)
+        {
+            Console.WriteLine("Invalid selection. Exiting...");
+            return;
+        }
+
         PlayerInfo playerOne, playerTwo;
+        playerOne.PlayerID = 'X';
+        playerTwo.PlayerID = 'O';
+
+        if (gameMode == 1)
+        {
+            Console.Write("Enter your name: ");
+            playerOne.PlayerName = Console.ReadLine();
+            playerTwo.PlayerName = "AI";
+        }
+        else
+        {
+            Console.Write("Player One please enter your name: ");
+            playerOne.PlayerName = Console.ReadLine();
+            Console.Write("Player Two please enter your name: ");
+            playerTwo.PlayerName = Console.ReadLine();
+        }
+
         char[,] board = new char[9, 10];
         int dropChoice, win, full, again;
-
-        Console.WriteLine("Let's Play Connect 4\n");
-
-        Console.Write("Player One please enter your name: ");
-        playerOne.PlayerName = Console.ReadLine();
-        playerOne.PlayerID = 'X';
-
-        Console.Write("Player Two please enter your name: ");
-        playerTwo.PlayerName = Console.ReadLine();
-        playerTwo.PlayerID = 'O';
 
         full = 0;
         win = 0;
@@ -33,6 +56,7 @@ public class Program
         {
             dropChoice = PlayerDrop(board, playerOne);
             CheckBellow(board, playerOne, dropChoice);
+            moveHistory.Push(dropChoice); // Store move in history
             DisplayBoard(board);
             win = CheckFour(board, playerOne);
             if (win == 1)
@@ -45,19 +69,42 @@ public class Program
                 }
             }
 
-            dropChoice = PlayerDrop(board, playerTwo);
-            CheckBellow(board, playerTwo, dropChoice);
-            DisplayBoard(board);
-            win = CheckFour(board, playerTwo);
-            if (win == 1)
+            if (gameMode == 1 && again != 2) // AI's turn only in single-player mode
             {
-                PlayerWin(playerTwo);
-                again = Restart(board);
-                if (again == 2)
+                dropChoice = AIPlayer(board);
+                CheckBellow(board, playerTwo, dropChoice);
+                moveHistory.Push(dropChoice); // Store move in history
+                Console.WriteLine("AI's Move:");
+                DisplayBoard(board);
+                win = CheckFour(board, playerTwo);
+                if (win == 1)
                 {
-                    break;
+                    PlayerWin(playerTwo);
+                    again = Restart(board);
+                    if (again == 2)
+                    {
+                        break;
+                    }
                 }
             }
+            else if (gameMode == 2 && again != 2) // Player Two's turn in two-player mode
+            {
+                dropChoice = PlayerDrop(board, playerTwo);
+                CheckBellow(board, playerTwo, dropChoice);
+                moveHistory.Push(dropChoice); // Store move in history
+                DisplayBoard(board);
+                win = CheckFour(board, playerTwo);
+                if (win == 1)
+                {
+                    PlayerWin(playerTwo);
+                    again = Restart(board);
+                    if (again == 2)
+                    {
+                        break;
+                    }
+                }
+            }
+
             full = FullBoard(board);
             if (full == 7)
             {
@@ -74,8 +121,18 @@ public class Program
         do
         {
             Console.Write(activePlayer.PlayerName + "'s Turn ");
-            Console.Write("Please enter a number between 1 and 7: ");
+            Console.Write("Please enter a number between 1 and 7");
+            if (activePlayer.PlayerName == "AI")
+                Console.Write(" (or 'undo' to undo): ");
+            else
+                Console.Write(": ");
             string input = Console.ReadLine();
+
+            if (input.ToLower() == "undo" && activePlayer.PlayerName != "AI") // Check for undo command
+            {
+                UndoLastMove(board);
+                continue;
+            }
 
             if (int.TryParse(input, out dropChoice))
             {
@@ -89,6 +146,28 @@ public class Program
         } while (true);
 
         return dropChoice;
+    }
+
+    static void UndoLastMove(char[,] board)
+    {
+        if (moveHistory.Count > 0)
+        {
+            int lastMove = moveHistory.Pop();
+            for (int i = 1; i <= 6; i++)
+            {
+                if (board[i, lastMove] != '*')
+                {
+                    board[i, lastMove] = '*';
+                    break;
+                }
+            }
+            Console.WriteLine("Last move undone.");
+            DisplayBoard(board);
+        }
+        else
+        {
+            Console.WriteLine("No moves to undo.");
+        }
     }
 
     static void CheckBellow(char[,] board, PlayerInfo activePlayer, int dropChoice)
@@ -227,5 +306,16 @@ public class Program
         }
 
         return restart;
+    }
+
+    static int AIPlayer(char[,] board)
+    {
+        int move;
+        do
+        {
+            move = random.Next(1, 8); // Generate a random move
+        } while (board[1, move] != '*');
+
+        return move;
     }
 }
