@@ -1,325 +1,304 @@
 using System;
 using System.Collections.Generic;
 
-struct PlayerInfo
+public class Player
 {
-	public string PlayerName;
-	public char PlayerID;
-}
+	public string Name { get; private set; }
+	public char Symbol { get; private set; }
 
-public class Program
-{
-	private static Stack<int> moveHistory = new Stack<int>();
-	private static Random random = new Random();
-	public static void Main(string[] args)
+	public Player(string name, char symbol)
 	{
-		Console.WriteLine("Welcome to Connect 4!");
-		Console.WriteLine("Select Game Mode:");
-		Console.WriteLine("1. Single Player");
-		Console.WriteLine("2. Two Players");
-		int gameMode = int.Parse(Console.ReadLine());
-		if (gameMode != 1 && gameMode != 2)
-		{
-			Console.WriteLine("Invalid selection. Exiting...");
-			return;
-		}
-
-		PlayerInfo playerOne, playerTwo;
-		playerOne.PlayerID = 'X';
-		playerTwo.PlayerID = 'O';
-		if (gameMode == 1)
-		{
-			Console.Write("Enter your name: ");
-			playerOne.PlayerName = Console.ReadLine();
-			playerTwo.PlayerName = "AI";
-		}
-		else
-		{
-			Console.Write("Player One please enter your name: ");
-			playerOne.PlayerName = Console.ReadLine();
-			Console.Write("Player Two please enter your name: ");
-			playerTwo.PlayerName = Console.ReadLine();
-		}
-
-		char[, ] board = new char[9, 10];
-		int dropChoice, win, full, again;
-		do
-		{
-			ResetBoard(board);
-			ResetMoveHistory();
-			full = 0;
-			win = 0;
-			again = 0;
-			DisplayBoard(board);
-			do
-			{
-				dropChoice = PlayerDrop(board, playerOne);
-				CheckBellow(board, playerOne, dropChoice);
-				moveHistory.Push(dropChoice);
-				DisplayBoard(board);
-				win = CheckFour(board, playerOne);
-				if (win == 1)
-				{
-					PlayerWin(playerOne);
-					again = Restart(board);
-					if (again == 2)
-					{
-						break;
-					}
-				}
-
-				if (gameMode == 1 && again != 2)
-				{
-					dropChoice = AIPlayer(board);
-					CheckBellow(board, playerTwo, dropChoice);
-					moveHistory.Push(dropChoice);
-					Console.WriteLine("AI's Move:");
-					DisplayBoard(board);
-					win = CheckFour(board, playerTwo);
-					if (win == 1)
-					{
-						PlayerWin(playerTwo);
-						again = Restart(board);
-						if (again == 2)
-						{
-							break;
-						}
-					}
-				}
-				else if (gameMode == 2 && again != 2)
-				{
-					dropChoice = PlayerDrop(board, playerTwo);
-					CheckBellow(board, playerTwo, dropChoice);
-					moveHistory.Push(dropChoice);
-					DisplayBoard(board);
-					win = CheckFour(board, playerTwo);
-					if (win == 1)
-					{
-						PlayerWin(playerTwo);
-						again = Restart(board);
-						if (again == 2)
-						{
-							break;
-						}
-					}
-				}
-
-				full = FullBoard(board);
-				if (full == 7)
-				{
-					Console.WriteLine("The board is full, it is a draw!");
-					again = Restart(board);
-				}
-			}
-			while (again != 2);
-		}
-		while (again == 1);
+		Name = name;
+		Symbol = symbol;
 	}
 
-	static int PlayerDrop(char[, ] board, PlayerInfo activePlayer)
+	public virtual int MakeMove(Board board)
 	{
-		int dropChoice;
-		bool validInput;
+		throw new NotImplementedException("MakeMove method should be implemented in derived classes.");
+	}
+}
+
+public class HumanPlayer : Player
+{
+	public HumanPlayer(string name, char symbol) : base(name, symbol)
+	{
+	}
+
+	public override int MakeMove(Board board)
+	{
+		int column;
 		do
 		{
-			Console.Write(activePlayer.PlayerName + "'s Turn ");
-			Console.Write("Please enter a number between 1 and 7");
-			if (activePlayer.PlayerName == "AI")
-				Console.Write(" (or 'undo' to undo): ");
-			else
-				Console.Write(": ");
-			string input = Console.ReadLine();
-			if (input.ToLower() == "undo" && activePlayer.PlayerName != "AI")
+			Console.Write(Name + "'s turn: ");
+			if (!int.TryParse(Console.ReadLine(), out column))
 			{
-				UndoLastMove(board);
+				Console.WriteLine("Invalid input. Please enter a number.");
 				continue;
 			}
 
-			validInput = int.TryParse(input, out dropChoice);
-			if (validInput && dropChoice >= 1 && dropChoice <= 7 && board[1, dropChoice] == '*')
+			if (column < 1 || column > board.Width)
 			{
-				break;
+				Console.WriteLine("Invalid column. Please choose a column between 1 and 7.");
+				continue;
 			}
 
-			Console.WriteLine("Invalid input or column is full. Please enter a number between 1 and 7.");
+			if (!board.IsValidMove(column))
+			{
+				Console.WriteLine("Column is full. Please choose another column.");
+				continue;
+			}
+
+			break;
 		}
 		while (true);
-		return dropChoice;
+		return column;
+	}
+}
+
+public class AIPlayer : Player
+{
+	private Random random;
+	public AIPlayer(char symbol) : base("AI", symbol)
+	{
+		random = new Random();
 	}
 
-	static void ResetBoard(char[, ] board)
+	public override int MakeMove(Board board)
 	{
-		for (int i = 1; i <= 6; i++)
+		List<int> availableColumns = board.GetAvailableColumns();
+		return availableColumns[random.Next(availableColumns.Count)];
+	}
+}
+
+public class Board
+{
+	public int Width { get; private set; }
+	public int Height { get; private set; }
+
+	private char[, ] grid;
+	public Board(int width, int height)
+	{
+		Width = width;
+		Height = height;
+		grid = new char[height, width];
+		InitializeBoard();
+	}
+
+	private void InitializeBoard()
+	{
+		for (int row = 0; row < Height; row++)
 		{
-			for (int j = 1; j <= 7; j++)
+			for (int col = 0; col < Width; col++)
 			{
-				board[i, j] = '*';
+				grid[row, col] = '*';
 			}
 		}
 	}
 
-	static void ResetMoveHistory()
+	public bool IsValidMove(int column)
 	{
-		moveHistory.Clear();
+		return grid[0, column - 1] == '*';
 	}
 
-	static void UndoLastMove(char[, ] board)
+	public bool IsFull()
 	{
-		if (moveHistory.Count >= 2)
+		for (int col = 0; col < Width; col++)
 		{
-			int lastMove = moveHistory.Pop();
-			int secondLastMove = moveHistory.Pop();
-			for (int i = 1; i <= 6; i++)
+			if (grid[0, col] == '*')
 			{
-				if (board[i, lastMove] != '*')
-				{
-					board[i, lastMove] = '*';
-					break;
-				}
-			}
-
-			for (int i = 1; i <= 6; i++)
-			{
-				if (board[i, secondLastMove] != '*')
-				{
-					board[i, secondLastMove] = '*';
-					break;
-				}
+				return false;
 			}
 		}
-		else
+
+		return true;
+	}
+
+	public List<int> GetAvailableColumns()
+	{
+		List<int> availableColumns = new List<int>();
+		for (int col = 0; col < Width; col++)
 		{
-			Console.WriteLine("Cannot undo further.");
+			if (IsValidMove(col + 1))
+			{
+				availableColumns.Add(col + 1);
+			}
+		}
+
+		return availableColumns;
+	}
+
+	public void PlaceSymbol(int column, char symbol)
+	{
+		for (int row = Height - 1; row >= 0; row--)
+		{
+			if (grid[row, column - 1] == '*')
+			{
+				grid[row, column - 1] = symbol;
+				break;
+			}
 		}
 	}
 
-	static void CheckBellow(char[, ] board, PlayerInfo activePlayer, int dropChoice)
+	public bool IsCellOccupied(int row, int column)
 	{
-		int length = 6;
-		int turn = 0;
-		do
-		{
-			if (board[length, dropChoice] != 'X' && board[length, dropChoice] != 'O')
-			{
-				board[length, dropChoice] = activePlayer.PlayerID;
-				turn = 1;
-			}
-			else
-			{
-				length--;
-			}
-		}
-		while (turn != 1);
+		return grid[row, column] != '*';
 	}
 
-	static void DisplayBoard(char[, ] board)
+	public char GetSymbol(int row, int column)
 	{
-		Console.WriteLine(" 1 2 3 4 5 6 7");
-		for (int i = 1; i <= 6; i++)
+		return grid[row, column];
+	}
+
+	public void Print()
+	{
+		for (int row = 0; row < Height; row++)
 		{
-			Console.Write("|");
-			for (int j = 1; j <= 7; j++)
+			for (int col = 0; col < Width; col++)
 			{
-				Console.Write(board[i, j] + " ");
+				Console.Write("| " + grid[row, col]);
 			}
 
 			Console.WriteLine("|");
 		}
+
+		Console.WriteLine(" 1  2  3  4  5  6  7");
+	}
+}
+
+public class Connect4Game
+{
+	private Board board;
+	private Player player1;
+	private Player player2;
+	public Connect4Game(Player player1, Player player2, int width = 7, int height = 6)
+	{
+		this.player1 = player1;
+		this.player2 = player2;
+		board = new Board(width, height);
 	}
 
-	static int CheckFour(char[, ] board, PlayerInfo activePlayer)
+	public void Start()
 	{
-		char XO = activePlayer.PlayerID;
-		int win = 0;
-		for (int i = 8; i >= 1; i--)
+		Console.WriteLine("Welcome to Connect 4!");
+		Console.WriteLine("Game started!");
+		Console.WriteLine();
+		Player currentPlayer = player1;
+		Player winner = null;
+		while (winner == null && !board.IsFull())
 		{
-			for (int j = 9; j >= 1; j--)
+			board.Print();
+			int column = currentPlayer.MakeMove(board);
+			board.PlaceSymbol(column, currentPlayer.Symbol);
+			if (HasConnectedFour(currentPlayer.Symbol, column))
 			{
-				if (board[i, j] == XO && board[i - 1, j - 1] == XO && board[i - 2, j - 2] == XO && board[i - 3, j - 3] == XO)
-				{
-					win = 1;
-				}
-
-				if (board[i, j] == XO && board[i, j - 1] == XO && board[i, j - 2] == XO && board[i, j - 3] == XO)
-				{
-					win = 1;
-				}
-
-				if (board[i, j] == XO && board[i - 1, j] == XO && board[i - 2, j] == XO && board[i - 3, j] == XO)
-				{
-					win = 1;
-				}
-
-				if (board[i, j] == XO && board[i - 1, j + 1] == XO && board[i - 2, j + 2] == XO && board[i - 3, j + 3] == XO)
-				{
-					win = 1;
-				}
-
-				if (board[i, j] == XO && board[i, j + 1] == XO && board[i, j + 2] == XO && board[i, j + 3] == XO)
-				{
-					win = 1;
-				}
+				winner = currentPlayer;
 			}
+
+			currentPlayer = (currentPlayer == player1) ? player2 : player1;
 		}
 
-		return win;
-	}
-
-	static int FullBoard(char[, ] board)
-	{
-		int full = 0;
-		for (int i = 1; i <= 7; i++)
+		board.Print();
+		if (winner != null)
 		{
-			if (board[1, i] != '*')
-			{
-				full++;
-			}
-		}
-
-		return full;
-	}
-
-	static void PlayerWin(PlayerInfo activePlayer)
-	{
-		Console.WriteLine("\n" + activePlayer.PlayerName + " Connected Four, You Win!");
-	}
-
-	static int Restart(char[, ] board)
-	{
-		int restart;
-		Console.Write("Would you like to restart? Yes(1) No(2): ");
-		restart = int.Parse(Console.ReadLine());
-		if (restart == 1)
-		{
-			ResetBoard(board);
-			ResetMoveHistory();
-			DisplayBoard(board);
+			Console.WriteLine(winner.Name + " wins!");
 		}
 		else
 		{
-			Console.WriteLine("Goodbye!");
+			Console.WriteLine("It's a draw!");
 		}
-
-		return restart;
 	}
 
-	static int AIPlayer(char[, ] board)
+	private bool HasConnectedFour(char symbol, int column)
 	{
-		List<int> availableColumns = new List<int>();
-		for (int col = 1; col <= 7; col++)
+		for (int row = 0; row <= board.Height - 4; row++)
 		{
-			if (board[1, col] == '*')
+			for (int col = 0; col < board.Width; col++)
 			{
-				availableColumns.Add(col);
+				if (board.GetSymbol(row, col) == symbol && board.GetSymbol(row + 1, col) == symbol && board.GetSymbol(row + 2, col) == symbol && board.GetSymbol(row + 3, col) == symbol)
+				{
+					return true;
+				}
 			}
 		}
 
-		if (availableColumns.Count == 0)
+		for (int row = 0; row < board.Height; row++)
 		{
-			return -1;
+			for (int col = 0; col <= board.Width - 4; col++)
+			{
+				if (board.GetSymbol(row, col) == symbol && board.GetSymbol(row, col + 1) == symbol && board.GetSymbol(row, col + 2) == symbol && board.GetSymbol(row, col + 3) == symbol)
+				{
+					return true;
+				}
+			}
 		}
 
-		int randomIndex = random.Next(availableColumns.Count);
-		return availableColumns[randomIndex];
+		for (int row = 0; row <= board.Height - 4; row++)
+		{
+			for (int col = 0; col <= board.Width - 4; col++)
+			{
+				if (board.GetSymbol(row, col) == symbol && board.GetSymbol(row + 1, col + 1) == symbol && board.GetSymbol(row + 2, col + 2) == symbol && board.GetSymbol(row + 3, col + 3) == symbol)
+				{
+					return true;
+				}
+			}
+		}
+
+		for (int row = 3; row < board.Height; row++)
+		{
+			for (int col = 0; col <= board.Width - 4; col++)
+			{
+				if (board.GetSymbol(row, col) == symbol && board.GetSymbol(row - 1, col + 1) == symbol && board.GetSymbol(row - 2, col + 2) == symbol && board.GetSymbol(row - 3, col + 3) == symbol)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+}
+
+public class Program
+{
+	public static void Main(string[] args)
+	{
+		int choice;
+		do
+		{
+			Console.WriteLine("Select Game Mode:");
+			Console.WriteLine("1. Single Player");
+			Console.WriteLine("2. Two Players");
+			int gameMode = int.Parse(Console.ReadLine());
+			if (gameMode != 1 && gameMode != 2)
+			{
+				Console.WriteLine("Invalid selection. Exiting...");
+				return;
+			}
+
+			Console.Write("Enter Player 1 name: ");
+			string player1Name = Console.ReadLine();
+			Player player1 = new HumanPlayer(player1Name, 'X');
+			Player player2;
+			if (gameMode == 1)
+			{
+				player2 = new AIPlayer('O');
+			}
+			else
+			{
+				Console.Write("Enter Player 2 name: ");
+				string player2Name = Console.ReadLine();
+				player2 = new HumanPlayer(player2Name, 'O');
+			}
+
+			Connect4Game game = new Connect4Game(player1, player2);
+			game.Start();
+			do
+			{
+				Console.WriteLine("Would you like to play again? (1 for yes, 0 for no): ");
+			}
+			while (!int.TryParse(Console.ReadLine(), out choice) || (choice != 0 && choice != 1));
+			Console.WriteLine("Goodbye!");
+		}
+		while (choice == 1);
 	}
 }
