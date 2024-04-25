@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 
+// player calss for players or ai
 public class Player
 {
 	public string Name { get; private set; }
@@ -12,12 +13,14 @@ public class Player
 		Symbol = symbol;
 	}
 
+	// MakeMove method should be implemented in derived classes.
 	public virtual int MakeMove(Board board)
 	{
 		throw new NotImplementedException("MakeMove method should be implemented in derived classes.");
 	}
 }
 
+// class for human player derived from player class
 public class HumanPlayer : Player
 {
 	public HumanPlayer(string name, char symbol) : base(name, symbol)
@@ -55,6 +58,7 @@ public class HumanPlayer : Player
 	}
 }
 
+//  AIPlayer class for ai
 public class AIPlayer : Player
 {
 	private Random random;
@@ -70,6 +74,7 @@ public class AIPlayer : Player
 	}
 }
 
+// Board class for the game board
 public class Board
 {
 	public int Width { get; private set; }
@@ -95,11 +100,13 @@ public class Board
 		}
 	}
 
+	// IsValidMove method checks if a move is valid
 	public bool IsValidMove(int column)
 	{
 		return grid[0, column - 1] == '*';
 	}
 
+	// IsFull method checks if the board is full
 	public bool IsFull()
 	{
 		for (int col = 0; col < Width; col++)
@@ -127,6 +134,7 @@ public class Board
 		return availableColumns;
 	}
 
+	// symbol on the board (*)
 	public void PlaceSymbol(int column, char symbol)
 	{
 		for (int row = Height - 1; row >= 0; row--)
@@ -139,16 +147,19 @@ public class Board
 		}
 	}
 
+	// check cell if its occupied
 	public bool IsCellOccupied(int row, int column)
 	{
 		return grid[row, column] != '*';
 	}
 
+	// returns the symbol at a cell
 	public char GetSymbol(int row, int column)
 	{
 		return grid[row, column];
 	}
 
+	// Print method prints the board
 	public void Print()
 	{
 		for (int row = 0; row < Height; row++)
@@ -165,6 +176,7 @@ public class Board
 	}
 }
 
+// Connect4Game class for the main game
 public class Connect4Game
 {
 	private Board board;
@@ -177,6 +189,7 @@ public class Connect4Game
 		board = new Board(width, height);
 	}
 
+	// Start method starts the game
 	public void Start()
 	{
 		Console.WriteLine("Welcome to Connect 4!");
@@ -208,6 +221,7 @@ public class Connect4Game
 		}
 	}
 
+	// checks if there are four connected symbols
 	private bool HasConnectedFour(char symbol, int column)
 	{
 		for (int row = 0; row <= board.Height - 4; row++)
@@ -258,6 +272,7 @@ public class Connect4Game
 	}
 }
 
+// entry point of the application
 public class Program
 {
 	public static void Main(string[] args)
